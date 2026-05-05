@@ -1,4 +1,4 @@
-import { Component, useState } from "react";
+import { useState } from "react";
 import { Col, Container, Form, Row } from "react-bootstrap";
 import SingleBook from "./SingleBook";
 import CommentArea from "./CommentArea";
@@ -36,9 +36,7 @@ const BookList = ({ books }) => {
                   <SingleBook
                     book={b}
                     selectedAsin={selectedAsin}
-                    changeSelectedAsin={(asin) =>
-                      setSelectedAsin(e.target.value)
-                    }
+                    changeSelectedAsin={(asin) => setSelectedAsin(asin)}
                   />
                 </Col>
               ))}

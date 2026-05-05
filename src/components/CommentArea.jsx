@@ -1,73 +1,75 @@
-import { Component } from "react";
+import { useCallback, useEffect, useState } from "react";
 import CommentList from "./CommentList";
 import AddComment from "./AddComment";
 import { Alert, Spinner } from "react-bootstrap";
 
-class CommentArea extends Component {
-  state = {
-    comments: [],
-    isLoading: false,
-    isError: false,
-  };
+const CommentArea = ({ asin }) => {
+  const [comments, setComments] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
 
-  componentDidMount() {
-    if (this.props.asin) {
-      this.fetchComments();
-    }
-  }
+  const fetchComments = useCallback(async () => {
+    if (!asin) return;
 
-  componentDidUpdate(prevProps) {
-    if (prevProps.asin !== this.props.asin) {
-      this.fetchComments();
-    }
-  }
+    setIsLoading(true);
+    setIsError(false);
 
-  fetchComments = async () => {
-    if (!this.props.asin) return;
-
-    this.setState({ isLoading: true, isError: false });
     try {
       let response = await fetch(
-        "https://striveschool-api.herokuapp.com/api/comments/" + this.props.asin,
+        "https://striveschool-api.herokuapp.com/api/comments/" + asin,
         {
           headers: {
-            Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2OWYzNTc0ZmYwNDIwZDAwMTUxNTVhYTMiLCJpYXQiOjE3Nzc1NTUyNzksImV4cCI6MTc3ODc2NDg3OX0.bHGT5ng7O-UqVRR2RLyTzEgJ349N18syeUF_ruTx2qs",
+            Authorization:
+              "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2OWYzNTc0ZmYwNDIwZDAwMTUxNTVhYTMiLCJpYXQiOjE3Nzc1NTUyNzksImV4cCI6MTc3ODc2NDg3OX0.bHGT5ng7O-UqVRR2RLyTzEgJ349N18syeUF_ruTx2qs",
           },
-        }
+        },
       );
+
       if (response.ok) {
         let data = await response.json();
-        this.setState({ comments: data, isLoading: false });
+        setComments(data);
       } else {
-        this.setState({ isLoading: false, isError: true });
+        setIsError(true);
       }
     } catch (error) {
-      this.setState({ isLoading: false, isError: true })
-      console.log("Errore nel fetch dei commenti:", error);
+      setIsError(true);
+      console.error("Errore nel fetch dei commenti:", error);
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [asin]);
 
-  render() {
-    return (
-      <div className="sticky-top" style={{ top: "20px" }}>
-        {!this.props.asin && (
-          <Alert style={{backgroundColor: '#00F3FF', color: '#FF00FF'}}>Seleziona un libro per vedere i commenti</Alert>
-        )}
-        
-        {this.state.isLoading && <Spinner animation="border" variant="primary" />}
-        
-        {this.state.isError && (
-          <Alert variant="danger">Errore nel caricamento dei commenti</Alert>
-        )}
+  useEffect(() => {
+    fetchComments();
+  }, [fetchComments]);
 
-        <CommentList comments={this.state.comments} />
-        
-        {this.props.asin && !this.state.isLoading && (
-          <AddComment asin={this.props.asin} onNewComment={this.fetchComments} />
-        )}
-      </div>
-    );
-  }
-}
+  return (
+    <div className="sticky-top" style={{ top: "20px" }}>
+      {!asin && (
+        <Alert style={{ backgroundColor: "#00F3FF", color: "#FF00FF" }}>
+          Seleziona un libro per vedere i commenti
+        </Alert>
+      )}
+
+      {isLoading && (
+        <Spinner
+          animation="border"
+          variant="primary"
+          className="d-block my-2"
+        />
+      )}
+
+      {isError && (
+        <Alert variant="danger">Errore nel caricamento dei commenti</Alert>
+      )}
+
+      <CommentList comments={comments} />
+
+      {asin && !isLoading && (
+        <AddComment asin={asin} onNewComment={fetchComments} />
+      )}
+    </div>
+  );
+};
 
 export default CommentArea;
